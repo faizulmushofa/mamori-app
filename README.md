@@ -94,6 +94,92 @@ Tekan `a` untuk Android Emulator, `i` untuk iOS Simulator, atau `w` untuk Web.
 
 ---
 
+## Alur Kolaborasi & Git Workflow
+
+Seluruh anggota tim wajib mematuhi alur Git berikut: **dilarang commit langsung ke `main` atau `dev`**.
+
+### 1. Cabang Utama
+
+- `main` : Kode produksi / rilis stabil siap demo.
+- `dev` : Titik integrasi fitur berjalan. Seluruh Pull Request (PR) ditargetkan ke branch ini.
+
+### 2. Standar Penamaan Branch
+
+Buat branch baru dari `dev` dengan format:
+- `feat/nama-fitur` (contoh: `feat/camera-location`, `feat/duplicate-detection`)
+- `fix/nama-bug` (contoh: `fix/gps-drift`, `fix/auth-persist`)
+- `refactor/komponen` (contoh: `refactor/zustand-store`)
+
+---
+
+### 3. Alur Kerja: Anggota Tim (Direct Collaborator / Clone)
+
+```bash
+# 1. Pastikan dev lokal terbaru
+git checkout dev
+git pull origin dev
+
+# 2. Buat branch fitur baru
+git checkout -b feat/nama-fitur
+
+# 3. Kembangkan kode & commit
+git add .
+git commit -m "feat: deskripsi perubahan singkat"
+
+# 4. Push branch ke GitHub
+git push origin feat/nama-fitur
+
+# 5. Buka GitHub: Buat Pull Request (PR) ke branch 'dev'
+```
+
+---
+
+### 4. Alur Kerja: Fork (External Contributor / Fork Workflow)
+
+#### A. Setup Sinkronisasi dengan Repo Asli (Upstream)
+Lakukan **sekali** setelah clone repo fork:
+
+```bash
+# Tambahkan repo asli sebagai upstream
+git remote add upstream https://github.com/faizulmushofa/mamori-app.git
+
+# Cek remote
+git remote -v
+```
+
+#### B. Cara Mendapatkan & Memperbarui Semua Branch dari Repo Asli
+Jalankan setiap sebelum mulai coding:
+
+```bash
+# Ambil seluruh branch & commit dari repo asli
+git fetch upstream
+
+# Pindah ke branch dev dan samakan dengan upstream/dev
+git checkout dev 2>/dev/null || git checkout -b dev upstream/dev
+git pull upstream dev
+
+# Ambil branch remote upstream lain ke lokal (bila diperlukan)
+git checkout -b nama-branch upstream/nama-branch
+```
+
+#### C. Buat Fitur & Submit PR
+```bash
+# 1. Buat branch fitur dari dev yang sudah up-to-date
+git checkout -b feat/nama-fitur dev
+
+# 2. Commit perubahan
+git add .
+git commit -m "feat: tambahkan fitur X"
+
+# 3. Push ke repo FORK Anda (origin)
+git push origin feat/nama-fitur
+
+# 4. Buka GitHub repo fork: Klik 'Contribute' -> 'Open pull request'
+#    Pastikan Base Repository: faizulmushofa/mamori-app, Base Branch: dev
+```
+
+---
+
 ## Lisensi
 
 Proyek ini didistribusikan di bawah lisensi [MIT](LICENSE).
