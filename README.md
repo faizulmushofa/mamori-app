@@ -66,8 +66,8 @@ mamori-app/
 
 1. Clone repositori:
    ```bash
-   git clone https://github.com/<username>/mamori.git
-   cd mamori/mamori-app
+   git clone https://github.com/faizulmushofa/mamori-app.git
+   cd mamori-app
    ```
 
 2. Pasang dependensi:
