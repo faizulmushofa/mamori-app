@@ -1,0 +1,40 @@
+{
+  "version": 2,
+  "skills": {
+    "design-mobile-apps": {
+      "source": "designed-by-ai/skills",
+      "commit": "03c20aec6dcedb5fabfb03dc37982eb52ef19ed6",
+      "sourceType": "github",
+      "skillPath": "skills/design-mobile-apps/SKILL.md",
+      "computedHash": "eec6dae3f26f8f154fe190a53387f0b2eab39aa120932d5c33af7f3284f04b10"
+    },
+    "expo-data-fetching": {
+      "source": "expo/skills",
+      "commit": "dfdebcc6c4c1bf7a9471cefd6b6f39c7ba6c884d",
+      "sourceType": "github",
+      "skillPath": "plugins/expo/skills/expo-data-fetching/SKILL.md",
+      "computedHash": "5566b445229ee4751aca90f0f08e06af0c53aa16d2227f20e9137c264cb9bc6e"
+    },
+    "react-native-best-practices": {
+      "source": "callstackincubator/agent-skills",
+      "commit": "59e9d17446a248b21d86f078fcd0bd2d36db1ca4",
+      "sourceType": "github",
+      "skillPath": "skills/react-native-best-practices/SKILL.md",
+      "computedHash": "03a527a04426ca72763396170997a51d6d07600100a549f09915a6b4e8dc10c1"
+    },
+    "react-native-testing": {
+      "source": "callstack/react-native-testing-library",
+      "commit": "564a84294717d8e4b0831f3e3a5e115cc3832e01",
+      "sourceType": "github",
+      "skillPath": "skills/react-native-testing/SKILL.md",
+      "computedHash": "9bed4271c080eb6ff6745db5a634b28552571f197d6b5efe58a734e75fe162f0"
+    },
+    "supabase": {
+      "source": "supabase/agent-skills",
+      "commit": "c9be0e931b7930f7d02126d04774d904c381e7d7",
+      "sourceType": "github",
+      "skillPath": "skills/supabase/SKILL.md",
+      "computedHash": "2fbff32fd63b7d31585cacf0ed43e5bf8d05dd20d6c0c751d256cb967a00eec1"
+    }
+  }
+}
