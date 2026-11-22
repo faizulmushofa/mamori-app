@@ -10,7 +10,7 @@
 
 **Posisi:** MAMORI membantu kampus mengetahui kerentanannya sebelum bencana, memastikan semua orang terhitung saat bencana, dan mempercepat pemulihan sesudahnya, dimulai dari laporan sehari-hari yang benar-benar diselesaikan.
 
-**Bukan:** media sosial, game berbasis lokasi, aplikasi "lapor bencana", atau pengganti sistem peringatan dini resmi.
+**Bukan:** media sosial, game berbasis lokasi, aplikasi "lapor bencana", atau pengganti peringatan dini resmi BMKG/BPBD. MAMORI menyediakan **peringatan dini berbasis komunitas yang belum diverifikasi resmi**.
 
 **Catatan nama:** kepanjangan "Mahasiswa" dipakai karena mahasiswa adalah pengguna utama. Dosen dan staf tetap pengguna sah (lihat bagian Pengguna).
 
@@ -42,7 +42,7 @@
 
 ### Non-Tujuan (di luar lingkup versi ini)
 
-- Bukan sistem peringatan dini atau pengganti BMKG/BPBD.
+- Bukan peringatan dini resmi dan bukan pengganti BMKG/BPBD. MAMORI hanya menyediakan **peringatan dini berbasis komunitas yang belum diverifikasi resmi**; keputusan resmi tetap milik BMKG/BPBD.
 - Bukan media sosial umum: tidak ada fitur hiburan, pesan pribadi, atau konten di luar pelaporan.
 - Tidak menjamin laporan ditindaklanjuti; produk menyediakan jalur dan transparansi, bukan jaminan.
 - Tidak mencakup area di luar satu kampus pilot pada v1.
@@ -54,7 +54,7 @@
 | --- | --- | --- |
 | **Mahasiswa** (pengguna utama) | Melapor cepat, melihat hasilnya, merasa kampus responsif | Membuat laporan, konfirmasi "masih ada", memantau status |
 | **Dosen dan tenaga kependidikan** | Melapor masalah di ruang kerja dan kelas | Sama seperti mahasiswa |
-| **Pengelola (sarpras/K3)** | Daftar laporan terverifikasi, terprioritas, tanpa duplikat | Memakai dasbor, mengubah status, mengunggah bukti perbaikan |
+| **Pengelola (sarpras/K3)** | Daftar laporan terverifikasi, terprioritas, tanpa duplikat | Memakai antrean prioritas di aplikasi (dasbor web menyusul), mengubah status, mengunggah bukti perbaikan |
 | **Tim siaga bencana / floor warden** | Mengetahui kondisi jalur evakuasi dan siapa yang aman | Memantau peta risiko, menjalankan drill, melihat check-in |
 | **Admin dan moderator** | Menjaga kualitas dan keamanan konten | Memoderasi laporan, mengelola pengguna dan kategori |
 
@@ -74,9 +74,21 @@
 
 | Prioritas | Fitur |
 | --- | --- |
-| **P0** (wajib; 8-10 minggu) | Lapor dengan foto kamera langsung + GPS + kategori (termasuk "risiko bencana"); peta persebaran dengan deteksi duplikat (Incident vs Report); konfirmasi satu tap "masih ada"; timeline status + notifikasi ke pelapor; dasbor untuk satu mitra pengelola; peta statis titik kumpul dan jalur evakuasi; login dan profil dasar; moderasi dasar |
-| **P1** | Check-in "Saya Aman"; tombol "Butuh Bantuan" yang diarahkan ke kontak resmi; peta offline; pengumuman resmi kampus; XP berbasis hasil; reputasi pelapor; leaderboard per area; galeri sebelum/sesudah; penilaian kerusakan pasca-kejadian |
-| **P2** | Komentar; feed berurutan kedekatan dan urgensi; integrasi data BMKG/InaRISK; geofencing dan notifikasi lanjutan; simulasi evakuasi bergamifikasi; ekspansi ke kampus lain |
+| **P0** (wajib; 7 minggu) | Lapor dengan foto kamera langsung + watermark koordinat dan waktu + GPS + kategori (termasuk "risiko bencana"); peta interaktif dengan filter reaktif (RxJS debounce) dan deteksi duplikat 25 m (Haversine sisi klien); konfirmasi satu tap "masih ada"; timeline status + notifikasi ke pelapor; geofencing area rawan bencana dengan notifikasi masuk radius; peta statis titik kumpul dan jalur evakuasi; login dan profil dasar; moderasi dasar |
+| **P1** | Check-in "Saya Aman"; tombol "Butuh Bantuan" yang diarahkan ke kontak resmi; peta offline; pengumuman resmi kampus; XP berbasis hasil; reputasi pelapor; leaderboard per area; galeri sebelum/sesudah |
+| **Pengembangan lanjutan** (di luar 7 minggu) | Dasbor web pengelola; moderasi penuh; laporan PDF mingguan; ekspor CSV; Mode Darurat penuh; penilaian kerusakan pasca-kejadian; komentar publik; feed berurutan kedekatan dan urgensi; integrasi data BMKG/InaRISK; simulasi evakuasi bergamifikasi; ekspansi ke kampus lain |
+
+### 6.1 Pemetaan Milestone (Pertemuan 9–15)
+
+| Pertemuan | Milestone | Fitur PRD yang dikerjakan |
+| --- | --- | --- |
+| 9 | Peta, `useLocationTracking`, Haversine | F-10, F-11, F-12; penanda kustom per kategori |
+| 10 | Secure store, file system, izin runtime | F-01–F-06 (kamera, GPS, watermark, draf), login |
+| 11 | RxJS, realtime, offline fallback | Filter reaktif (F-17), F-20–F-21, F-30–F-32 (status dan notifikasi) |
+| 12 | UI dan animasi | Skeleton loader, safe area, mikro-interaksi |
+| 13 | Audit dan profiling | Cleanup subscription lokasi, `React.memo` pada marker peta |
+| 14 | Test dan APK | Unit test Haversine, deteksi duplikat, store Zustand |
+| 15 | Integrasi, laporan AIK, demo | Bab I dan II dari PRD; Bab IV dari bagian 11 (Amanah) |
 
 ## 7. Kebutuhan Fungsional
 
@@ -89,20 +101,23 @@
 | F-03 | Pengguna memilih kategori: Fasilitas, Kebersihan, Drainase/Banjir, Pohon/Lingkungan, Listrik/Penerangan, **Risiko Bencana**, Lainnya. |
 | F-04 | Pengguna dapat menambahkan deskripsi singkat (opsional, maksimal 280 karakter). |
 | F-05 | Pengguna dapat menandai tingkat keparahan (Rendah, Sedang, Tinggi) dan apakah masalah menghalangi jalur evakuasi. |
-| F-06 | Alur lapor selesai dalam maksimal 4 langkah dan dapat disimpan sebagai draf jika sinyal buruk. |
+| F-06 | Alur lapor selesai dalam maksimal 4 langkah. Draf dan foto disimpan di `documentDirectory` (`expo-file-system`) agar bisa dilanjutkan tanpa sinyal. |
 | F-07 | Sistem memblur otomatis wajah dan plat nomor pada foto sebelum ditampilkan publik. |
 | F-08 | Sistem menolak laporan dengan indikasi lokasi palsu (mock location) atau lokasi di luar area kampus pilot. |
+| F-09 | Setiap foto laporan diberi watermark koordinat dan waktu pengambilan yang ditanam saat foto diambil, sehingga bukti tidak bisa diubah setelahnya. |
 
 ### 7.2 Peta dan Deteksi Duplikat (P0)
 
 | ID | Kebutuhan |
 | --- | --- |
 | F-10 | Peta interaktif menampilkan Incident berdasarkan lokasi, kategori, status, dan keparahan. |
-| F-11 | Saat laporan baru dibuat, sistem mencari Incident aktif dalam radius tertentu (usulan awal 25 m) dengan kategori yang sama. |
+| F-11 | Saat laporan baru dibuat, sistem mencari Incident aktif dalam radius 25 m dengan kategori yang sama. Perhitungan memakai **Haversine di sisi klien**; PostGIS tidak diperlukan pada v1. |
 | F-12 | Jika ada kandidat, pengguna ditanya: "Apakah ini masalah yang sama?" dengan opsi gabung sebagai bukti tambahan atau buat Incident baru. |
 | F-13 | Laporan yang digabung dihitung sebagai Report tambahan pada Incident yang sama, bukan Incident baru. |
 | F-14 | Sistem membedakan Report yang membawa informasi baru (foto baru, perubahan kondisi) dari duplikat tanpa informasi tambahan; duplikat tanpa informasi baru tidak mendapat poin. |
 | F-15 | Moderator dapat menggabung atau memisahkan Incident secara manual. |
+| F-16 | Geofencing area rawan bencana: aplikasi menyimpan zona risiko (poligon) dan mengirim notifikasi saat pengguna masuk radius zona. |
+| F-17 | Filter peta (kategori, status, keparahan) dan pencarian kandidat duplikat memakai **RxJS debounce**, sehingga permintaan tidak dibanjiri saat pengguna mengetik atau menggeser peta. |
 
 ### 7.3 Konfirmasi dan Verifikasi (P0)
 
@@ -123,7 +138,9 @@
 | F-33 | Incident menampilkan penghitung "hari tanpa respons" sejak status Terverifikasi. |
 | F-34 | Pengelola dapat mengunggah foto "sesudah" saat menandai Selesai; pelapor dapat menyetujui atau membuka kembali (*reopen*). |
 
-### 7.5 Dasbor Mitra Pengelola (P0)
+### 7.5 Dasbor Mitra Pengelola (Pengembangan Lanjutan)
+
+> Tidak ada di spesifikasi tugas dan tidak masuk 7 minggu. Pada v1, tindak lanjut status dilakukan lewat aksi moderator/pengelola di aplikasi. Dasbor web dibangun setelah pilot.
 
 | ID | Kebutuhan |
 | --- | --- |
@@ -144,7 +161,9 @@
 | F-53 | Modul edukasi singkat per ancaman utama kampus (apa yang dilakukan saat gempa/kebakaran di gedung ini). (P1) |
 | F-54 | Pendaftaran peran relawan dan floor warden; pendataan kebutuhan khusus evakuasi bersifat opsional dengan persetujuan eksplisit. (P1) |
 
-### 7.7 Mode Darurat (P1)
+### 7.7 Mode Darurat (Pengembangan Lanjutan; inti check-in tetap P1)
+
+> Orkestrasi penuh (F-60, F-63, F-64, F-65, F-66) adalah pengembangan lanjutan. Yang tetap P1 hanya check-in **"Saya Aman"** dan tombol **"Butuh Bantuan"** (F-61, F-62).
 
 | ID | Kebutuhan |
 | --- | --- |
@@ -169,7 +188,7 @@
 | F-76 | Hadiah lokal: SKPI/sertifikat kegiatan, voucher kantin, merchandise (bergantung kesepakatan mitra). |
 | F-77 | **Tidak ada** bonus penemuan pertama pada kategori bencana atau area berbahaya. |
 
-### 7.9 Moderasi dan Admin (P0 dasar)
+### 7.9 Moderasi dan Admin (P0 dasar; moderasi penuh = pengembangan lanjutan)
 
 | ID | Kebutuhan |
 | --- | --- |
@@ -178,24 +197,38 @@
 | F-82 | Moderator dapat menyembunyikan, menggabung, menolak (dengan alasan), dan memblokir pengguna. |
 | F-83 | Log audit semua tindakan moderator dan pengelola. |
 
+### 7.10 Penyimpanan Klien dan Keamanan (P0)
+
+| ID | Kebutuhan |
+| --- | --- |
+| F-90 | **Scoped Storage / Document Vault:** foto laporan dan draf disimpan di `documentDirectory` (`expo-file-system`), bukan di folder publik. |
+| F-91 | Token login dan kredensial disimpan di `expo-secure-store`, tidak pernah di AsyncStorage biasa. |
+| F-92 | Izin kamera dan lokasi diminta saat dibutuhkan (just-in-time) dengan alasan yang jelas, bukan sekaligus saat aplikasi dibuka. |
+
 ## 8. Model Data Inti
 
 Satu **Incident** dapat memiliki banyak **Report** dari pengguna berbeda.
 
 | Entitas | Deskripsi | Atribut utama |
 | --- | --- | --- |
-| **User** | Pengguna aplikasi | id, nama, peran, reputasi, XP, status akun |
+| **User** | Pengguna aplikasi | id, nama, email, reputasi, XP, status akun |
+| **UserRole** | Peran pengguna (many-to-many, F-54) | user\_id, peran, primary, diberikan\_oleh, diberikan\_pada |
 | **Incident** | Satu masalah nyata pada satu lokasi | id, kategori, lokasi (titik), keparahan, status, hambatan\_evakuasi, dibuat\_pada, selesai\_pada |
-| **Report** | Bukti atau kontribusi pengguna terhadap Incident | id, incident\_id, user\_id, jenis (awal/konfirmasi/bukti-baru/pembaruan), foto, lokasi, waktu, deskripsi, membawa\_info\_baru |
-| **Post** | Representasi Incident di Feed | id, incident\_id, urutan\_prioritas |
+| **Report** | Bukti atau kontribusi pengguna terhadap Incident | id, incident\_id, user\_id, jenis (awal/konfirmasi/bukti-baru/pembaruan), foto, lokasi, waktu, deskripsi, membawa\_info\_baru, jarak\_ke\_lokasi |
 | **StatusEvent** | Riwayat perubahan status | id, incident\_id, status, oleh, catatan, waktu |
-| **Confirmation** | Konfirmasi "masih ada" | id, incident\_id, user\_id, jarak\_ke\_lokasi, waktu |
+| **RiskZone** | Zona rawan bencana untuk geofencing (F-16) | id, nama, jenis ancaman, tingkat risiko, poligon, diperbarui\_pada |
+| **Announcement** | Pengumuman resmi satu arah dari kampus | id, event\_id, judul, isi, oleh, waktu |
 | **SafetyCheckin** | Check-in "Saya Aman" | id, user\_id, event\_id, waktu, lokasi (opsional) |
 | **AssemblyPoint / EvacRoute / SafetyAsset** | Data statis kesiapsiagaan | id, nama, geometri, tipe, status kondisi |
 | **EmergencyEvent** | Kejadian darurat atau drill | id, jenis, mulai, selesai, ditetapkan\_oleh |
 | **XPLedger** | Catatan poin | id, user\_id, sumber, jumlah, waktu |
 
-**Catatan teknis usulan:** gunakan basis data dengan dukungan geospasial (misalnya PostgreSQL + PostGIS) untuk pencarian radius dan deteksi duplikat.
+**Catatan teknis usulan:**
+
+- **Deteksi duplikat 25 m dan geofencing dihitung di sisi klien dengan Haversine** (`utils/haversine.ts`). PostGIS tidak diperlukan pada v1; cukup simpan koordinat sebagai `double precision`/`geometry(Point,4326)`.
+- **Backend: satu layanan terkelola** (Supabase atau Firebase Realtime), tanpa server sendiri. Pilih salah satu, bukan keduanya.
+- **Konfirmasi "masih ada" disimpan sebagai `Report` berjenis `konfirmasi`**, bukan tabel terpisah, agar tidak ada data ganda.
+- **Penyimpanan klien:** foto dan draf di `documentDirectory`; token di `expo-secure-store` (F-90, F-91).
 
 ## 9. Alur Pengguna Utama
 
@@ -214,7 +247,7 @@ Satu **Incident** dapat memiliki banyak **Report** dari pengguna berbeda.
 3. Setelah selesai, mengunggah foto "sesudah" dan menandai *Selesai*.
 4. Pelapor menerima notifikasi dan dapat menyetujui atau membuka kembali.
 
-**C. Saat darurat atau drill**
+**C. Saat darurat atau drill (Mode Darurat penuh = pengembangan lanjutan; check-in = P1)**
 
 1. Admin mengaktifkan Mode Darurat → notifikasi masuk dan antarmuka berubah sederhana.
 2. Pengguna menekan "Saya Aman" (offline dulu, terkirim saat sinyal ada).
@@ -232,7 +265,7 @@ Satu **Incident** dapat memiliki banyak **Report** dari pengguna berbeda.
 | **Skalabilitas** | Mendukung minimal 5.000 pengguna per kampus pada pilot |
 | **Keamanan** | Enkripsi saat transit dan tersimpan; akses berbasis peran; log audit |
 | **Aksesibilitas** | Kontras tinggi, ukuran tombol besar pada Mode Darurat, dukungan pembaca layar dasar |
-| **Platform** | Aplikasi mobile (Android lebih dulu, iOS menyusul) dan dasbor web untuk pengelola |
+| **Platform** | Aplikasi mobile (Android lebih dulu, iOS menyusul); dasbor web pengelola masuk pengembangan lanjutan |
 | **Bahasa** | Bahasa Indonesia sebagai default |
 
 ## 11. Privasi, Keamanan, dan Etika
@@ -243,8 +276,10 @@ Satu **Incident** dapat memiliki banyak **Report** dari pengguna berbeda.
 - **Anti-fraud:** deteksi mock-location, pemeriksaan metadata foto (EXIF), foto hanya dari kamera, kuota harian, reputasi.
 - **Hoaks dan SARA:** moderasi dua lapis (otomatis + manusia); laporan bencana berlabel *"Laporan komunitas, belum diverifikasi resmi"*.
 - **Keselamatan pengguna:** tidak ada insentif yang mendorong mendekati lokasi bencana atau area berbahaya; XP dimatikan pada Mode Darurat.
-- **Batas tanggung jawab:** disclaimer jelas bahwa MAMORI bukan sistem peringatan dini resmi dan tidak menjamin tindak lanjut; kontak darurat resmi selalu diutamakan.
+- **Batas tanggung jawab:** disclaimer jelas bahwa MAMORI bukan peringatan dini resmi (hanya peringatan dini berbasis komunitas yang belum diverifikasi) dan tidak menjamin tindak lanjut; kontak darurat resmi selalu diutamakan.
 - **Data resmi** (BMKG, InaRISK/BNPB) selalu ditampilkan dengan label sumber.
+
+**Catatan Amanah (AIK):** bagian ini menjadi contoh penerapan Amanah dalam laporan — data lokasi dan status "aman" diperlakukan sebagai amanah yang dijaga: retensi singkat, akses terbatas, persetujuan eksplisit, dan tidak ada insentif yang mendorong pengguna mendekati bahaya. Kejujuran label sumber dan batas tanggung jawab adalah bentuk amanah terhadap pengguna dan pihak resmi.
 
 ## 12. Metrik Keberhasilan (Pilot 90 Hari)
 
@@ -277,7 +312,7 @@ Satu **Incident** dapat memiliki banyak **Report** dari pengguna berbeda.
 | Fase | Durasi | Isi |
 | --- | --- | --- |
 | Persiapan | Minggu 1-2 | Kesepakatan mitra, survei kampus, pemetaan ancaman utama (InaRISK/BPBD), data titik kumpul dan jalur evakuasi |
-| Pembangunan P0 | Minggu 3-10 | Lapor, peta, duplikat, konfirmasi, status, dasbor |
+| Pembangunan P0 | Minggu 3-9 (7 minggu) | Lapor + watermark, peta interaktif + filter RxJS, duplikat Haversine, konfirmasi, status, geofencing, data kesiapsiagaan |
 | Beta tertutup | Minggu 11-12 | 20-30 kontributor inti, perbaikan |
 | Pilot terbuka | Minggu 13-24 | Peluncuran satu kampus, ukur metrik, jalankan P1 bertahap |
 | Drill evakuasi | Minimal 2 kali selama pilot | Uji "Saya Aman", peta offline, jalur bantuan |
@@ -287,7 +322,7 @@ Satu **Incident** dapat memiliki banyak **Report** dari pengguna berbeda.
 
 | Risiko | Dampak | Mitigasi |
 | --- | --- | --- |
-| Pengelola tidak menindaklanjuti | Loop utama putus, pengguna pergi | Kesepakatan tertulis dengan mitra; dasbor dan laporan mingguan; penghitung "hari tanpa respons" |
+| Pengelola tidak menindaklanjuti | Loop utama putus, pengguna pergi | Kesepakatan tertulis dengan mitra; antrean prioritas di aplikasi; penghitung "hari tanpa respons"; dasbor menyusul |
 | Cold start (peta kosong) | Aplikasi terlihat mati | Seed laporan, kontributor inti, kawasan sempit |
 | Spam, hoaks, laporan iseng | Kepercayaan turun, beban moderasi | Reputasi, kuota, moderasi dua lapis, foto hanya kamera |
 | Spoofing GPS demi XP | Data rusak | Deteksi mock-location, EXIF, XP berbobot hasil |
@@ -310,9 +345,9 @@ Untuk tugas atau kompetisi akademik, bagian ini cukup dipresentasikan sebagai re
 
 | Kuartal | Fokus |
 | --- | --- |
-| K1 | P0 dan beta tertutup di satu kampus |
+| K1 | P0 (7 minggu) dan beta tertutup di satu kampus |
 | K2 | Pilot terbuka, P1 (check-in, peta offline, XP berbasis hasil), dua drill evakuasi |
-| K3 | Evaluasi pilot, integrasi BMKG/InaRISK, komentar dan feed, perbaikan |
+| K3 | Dasbor pengelola, laporan PDF/CSV, Mode Darurat penuh, integrasi BMKG/InaRISK, komentar dan feed |
 | K4 | Ekspansi ke kampus kedua bila target pilot tercapai |
 
 ## 17. Pertanyaan Terbuka
