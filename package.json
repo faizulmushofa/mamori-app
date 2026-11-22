@@ -28,6 +28,8 @@
   },
   "scripts": {
     "start": "expo start",
+    "typecheck": "tsc --noEmit",
+    "typecheck:test": "tsc -p tests/tsconfig.json --noEmit",
     "test": "node --experimental-strip-types --test tests/**/*.test.ts",
     "android": "expo start --android",
     "ios": "expo start --ios",
