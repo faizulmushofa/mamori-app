@@ -1,3 +1,5 @@
+import { Platform } from 'react-native';
+
 /**
  * MAMORI Frontend Design Tokens
  * Tema: Civic Infrastructure & Campus Disaster Mitigation (SDG 11)
@@ -63,10 +65,14 @@ export const radii = {
   md: 12,
   lg: 16,
   xl: 20,
+  xxl: 24,
   full: 9999,
 } as const;
 
 export const typography = {
+  fontFamily: {
+    mono: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+  },
   size: {
     xs: 11,
     sm: 13,

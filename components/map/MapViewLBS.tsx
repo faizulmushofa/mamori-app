@@ -6,16 +6,17 @@ import {
   Pressable,
   ActivityIndicator,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, radii, typography, shadows } from '../../constants/tokens';
 import {
   CATEGORY_METADATA,
   SEVERITY_METADATA,
   type IncidentItem,
+  type IncidentCategory,
 } from '../../types/incident';
 import {
   calculateHaversineDistance,
   formatDistance,
-  isDuplicateCandidate,
 } from '../../lib/actions/geo.actions';
 import type { Coordinates } from '../../lib/types/geo.types';
 
@@ -29,6 +30,25 @@ interface MapViewLBSProps {
   onSelectIncident: (incident: IncidentItem) => void;
   onRefreshGPS: () => void;
 }
+
+const getCategoryIcon = (category: IncidentCategory) => {
+  switch (category) {
+    case 'bencana':
+      return <Ionicons name="warning" size={16} color={colors.textInverse} />;
+    case 'drainase':
+      return <Ionicons name="water" size={16} color={colors.textInverse} />;
+    case 'listrik':
+      return <Ionicons name="flash" size={16} color={colors.textInverse} />;
+    case 'pohon':
+      return <Ionicons name="leaf" size={16} color={colors.textInverse} />;
+    case 'kebersihan':
+      return <Ionicons name="trash" size={16} color={colors.textInverse} />;
+    case 'fasilitas':
+      return <Ionicons name="construct" size={16} color={colors.textInverse} />;
+    default:
+      return <Ionicons name="alert" size={16} color={colors.textInverse} />;
+  }
+};
 
 /**
  * Komponen Peta Interaktif LBS Mamori (Pertemuan 9 & PRD F-10)
@@ -64,7 +84,10 @@ export const MapViewLBS: React.FC<MapViewLBSProps> = ({
               <View style={styles.userPulseRing} />
               <View style={styles.userMarkerDot} />
               <View style={styles.userCallout}>
-                <Text style={styles.userCalloutText}>📍 Posisi Anda</Text>
+                <View style={styles.userCalloutRow}>
+                  <Ionicons name="navigate" size={10} color={colors.primary} />
+                  <Text style={styles.userCalloutText}>Posisi Anda</Text>
+                </View>
                 <Text style={styles.coordsMini}>
                   {userCoords.latitude.toFixed(5)}, {userCoords.longitude.toFixed(5)}
                 </Text>
@@ -104,17 +127,7 @@ export const MapViewLBS: React.FC<MapViewLBSProps> = ({
                       isSelected && styles.pinBubbleSelected,
                     ]}
                   >
-                    <Text style={styles.pinIcon}>
-                      {inc.category === 'bencana'
-                        ? '🚨'
-                        : inc.category === 'drainase'
-                        ? '🌊'
-                        : inc.category === 'listrik'
-                        ? '⚡'
-                        : inc.category === 'pohon'
-                        ? '🌳'
-                        : '🔧'}
-                    </Text>
+                    {getCategoryIcon(inc.category)}
                   </View>
                   <View style={[styles.pinTail, { borderTopColor: catMeta.color }]} />
 
@@ -140,53 +153,46 @@ export const MapViewLBS: React.FC<MapViewLBSProps> = ({
         {/* Floating Top Controls */}
         <View style={styles.topControlBar}>
           <View style={styles.gpsStatusPill}>
-            {isLoadingGPS ? (
-              <ActivityIndicator size="small" color={colors.primary} />
-            ) : (
-              <View
-                style={[
-                  styles.statusDot,
-                  {
-                    backgroundColor: permissionGranted
-                      ? colors.success
-                      : colors.danger,
-                  },
-                ]}
-              />
-            )}
+            <View
+              style={[
+                styles.statusDot,
+                {
+                  backgroundColor: permissionGranted
+                    ? colors.success
+                    : colors.warning,
+                },
+              ]}
+            />
             <Text style={styles.gpsStatusText}>
-              {permissionGranted
-                ? userCoords
-                  ? `GPS Aktif (${formatDistance(selectedDistance)} terpilih)`
-                  : 'Mencari Koordinat...'
-                : gpsError || 'Izin GPS Belum Diberikan'}
+              {isLoadingGPS
+                ? 'Mencari GPS...'
+                : gpsError
+                ? 'GPS Terbatas'
+                : 'GPS Aktif'}
             </Text>
+            {isLoadingGPS && (
+              <ActivityIndicator size="small" color={colors.primary} />
+            )}
           </View>
         </View>
 
-        {/* Floating Right Actions */}
+        {/* Floating Action Buttons */}
         <View style={styles.floatingActions}>
           <Pressable
-            style={({ pressed }) => [
-              styles.floatBtn,
-              pressed && styles.btnPressed,
-            ]}
+            style={({ pressed }) => [styles.floatBtn, pressed && styles.btnPressed]}
             onPress={onRefreshGPS}
           >
-            <Text style={styles.floatBtnIcon}>🔄</Text>
-            <Text style={styles.floatBtnLabel}>Sync GPS</Text>
+            <Ionicons name="locate" size={15} color={colors.textMain} />
+            <Text style={styles.floatBtnLabel}>GPS Saya</Text>
           </Pressable>
 
           <Pressable
-            style={({ pressed }) => [
-              styles.floatBtn,
-              pressed && styles.btnPressed,
-            ]}
+            style={({ pressed }) => [styles.floatBtn, pressed && styles.btnPressed]}
             onPress={() =>
               setMapType((prev) => (prev === 'standard' ? 'schematic' : 'standard'))
             }
           >
-            <Text style={styles.floatBtnIcon}>🗺️</Text>
+            <Ionicons name="layers-outline" size={15} color={colors.textMain} />
             <Text style={styles.floatBtnLabel}>
               {mapType === 'standard' ? 'Peta' : 'Skema'}
             </Text>
@@ -260,6 +266,11 @@ const styles = StyleSheet.create({
     ...shadows.sm,
     alignItems: 'center',
   },
+  userCalloutRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+  },
   userCalloutText: {
     fontSize: 10,
     fontWeight: typography.weight.bold,
@@ -296,7 +307,7 @@ const styles = StyleSheet.create({
     borderRadius: radii.xs,
   },
   markersLayer: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     justifyContent: 'space-around',
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -323,9 +334,6 @@ const styles = StyleSheet.create({
   pinBubbleSelected: {
     borderColor: colors.warning,
     borderWidth: 3,
-  },
-  pinIcon: {
-    fontSize: 16,
   },
   pinTail: {
     width: 0,
@@ -395,9 +403,6 @@ const styles = StyleSheet.create({
     gap: 4,
     borderWidth: 1,
     borderColor: colors.border,
-  },
-  floatBtnIcon: {
-    fontSize: 14,
   },
   floatBtnLabel: {
     fontSize: typography.size.xs,

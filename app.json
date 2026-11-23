@@ -3,6 +3,7 @@
     "name": "mamori-mobile",
     "slug": "mamori-mobile",
     "version": "1.0.0",
+    "scheme": "mamori",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",

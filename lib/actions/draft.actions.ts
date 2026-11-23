@@ -1,6 +1,8 @@
 import type { ReportDraft, PhotoValidation } from '../types/storage.types.ts';
 import { validatePhotoSize } from './photo.actions.ts';
 
+export type { ReportDraft, PhotoValidation };
+
 let defaultBaseDir = '/tmp/mamori_documents/';
 
 async function getNativeFileSystem(): Promise<any | null> {

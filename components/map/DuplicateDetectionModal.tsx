@@ -1,27 +1,25 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  Modal,
-  StyleSheet,
-  Pressable,
-  ScrollView,
-} from 'react-native';
+import { View, Text, StyleSheet, Modal, Pressable, ScrollView } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, radii, typography, shadows } from '../../constants/tokens';
-import { CATEGORY_METADATA, type IncidentItem } from '../../types/incident';
-import { formatDistance } from '../../lib/actions/geo.actions';
+import {
+  CATEGORY_METADATA,
+  STATUS_METADATA,
+  type IncidentItem,
+} from '../../types/incident';
 
 interface DuplicateDetectionModalProps {
   visible: boolean;
   existingIncident: IncidentItem | null;
-  distanceMeters: number;
-  onMerge: (existingId: string) => void;
+  distanceMeters: number | null;
+  onMerge: (incidentId: string) => void;
   onCreateNew: () => void;
   onCancel: () => void;
 }
 
 /**
- * Modal Deteksi Duplikat Radius 25m (PRD F-11, F-12)
+ * Modal Interaktif Pencegahan Duplikat Spasial (PRD F-11 & F-12)
+ * Memverifikasi laporan baru dalam radius 25 meter dengan kategori serupa.
  */
 export const DuplicateDetectionModal: React.FC<DuplicateDetectionModalProps> = ({
   visible,
@@ -34,6 +32,8 @@ export const DuplicateDetectionModal: React.FC<DuplicateDetectionModalProps> = (
   if (!existingIncident) return null;
 
   const categoryMeta = CATEGORY_METADATA[existingIncident.category];
+  const statusMeta = STATUS_METADATA[existingIncident.status];
+  const roundedDistance = distanceMeters != null ? Math.round(distanceMeters) : 0;
 
   return (
     <Modal
@@ -46,19 +46,18 @@ export const DuplicateDetectionModal: React.FC<DuplicateDetectionModalProps> = (
         <View style={styles.card}>
           <View style={styles.header}>
             <View style={styles.badgeWarning}>
-              <Text style={styles.badgeWarningText}>Radius 25m Terdeteksi</Text>
+              <Ionicons name="alert-circle" size={14} color={colors.warning} />
+              <Text style={styles.badgeWarningText}>DETEKSI DUPLIKAT SPASIAL</Text>
             </View>
-            <Text style={styles.title}>Kandidat Laporan Duplikat</Text>
+            <Text style={styles.title}>Laporan Serupa Ditemukan</Text>
             <Text style={styles.subtitle}>
-              Sistem mendeteksi laporan aktif berjarak{' '}
-              <Text style={styles.distanceHighlight}>
-                {formatDistance(distanceMeters)}
-              </Text>{' '}
-              dari titik Anda dengan kategori serupa.
+              Ditemukan masalah sejenis berjarak hanya{' '}
+              <Text style={styles.distanceHighlight}>{roundedDistance} meter</Text> dari
+              posisi Anda.
             </Text>
           </View>
 
-          <ScrollView style={styles.scrollContent}>
+          <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
             <View style={styles.existingCard}>
               <View style={styles.rowBetween}>
                 <View
@@ -68,14 +67,15 @@ export const DuplicateDetectionModal: React.FC<DuplicateDetectionModalProps> = (
                   ]}
                 >
                   <Text
-                    style={[styles.categoryTagText, { color: categoryMeta.color }]}
+                    style={[
+                      styles.categoryTagText,
+                      { color: categoryMeta.color },
+                    ]}
                   >
                     {categoryMeta.label}
                   </Text>
                 </View>
-                <Text style={styles.statusPill}>
-                  Status: {existingIncident.status.toUpperCase()}
-                </Text>
+                <Text style={styles.statusPill}>{statusMeta.label}</Text>
               </View>
 
               <Text style={styles.incidentTitle}>{existingIncident.title}</Text>
@@ -85,19 +85,22 @@ export const DuplicateDetectionModal: React.FC<DuplicateDetectionModalProps> = (
 
               <View style={styles.metaRow}>
                 <Text style={styles.metaText}>
-                  👤 Dilaporkan oleh: {existingIncident.reporterName}
+                  Pelapor: {existingIncident.reporterName}
                 </Text>
                 <Text style={styles.metaText}>
-                  👍 {existingIncident.confirmationsCount} Konfirmasi Warga
+                  Dukungan: {existingIncident.confirmationsCount} warga
                 </Text>
               </View>
             </View>
 
             <View style={styles.infoBox}>
-              <Text style={styles.infoTitle}>💡 Mengapa disarankan bergabung?</Text>
+              <View style={styles.infoTitleRow}>
+                <Ionicons name="information-circle" size={16} color={colors.primary} />
+                <Text style={styles.infoTitle}>Mengapa disarankan bergabung?</Text>
+              </View>
               <Text style={styles.infoDesc}>
-                Menggabungkan laporan menambah bukti dan bobot urgensi ke petugas
-                sarpras/K3 tanpa mengotori peta dengan laporan ganda (PRD §2).
+                Menggabungkan laporan Anda memperkuat bukti dan meningkatkan prioritas
+                penanganan tim Sarpras tanpa membuat antrean ganda.
               </Text>
             </View>
           </ScrollView>
@@ -110,8 +113,9 @@ export const DuplicateDetectionModal: React.FC<DuplicateDetectionModalProps> = (
               ]}
               onPress={() => onMerge(existingIncident.id)}
             >
+              <Ionicons name="checkmark-circle" size={18} color={colors.textInverse} />
               <Text style={styles.primaryBtnText}>
-                ✓ Gabung Sebagai Bukti Tambahan
+                Gabung Sebagai Bukti Tambahan
               </Text>
             </Pressable>
 
@@ -122,6 +126,7 @@ export const DuplicateDetectionModal: React.FC<DuplicateDetectionModalProps> = (
               ]}
               onPress={onCreateNew}
             >
+              <Ionicons name="add-circle-outline" size={18} color={colors.textMain} />
               <Text style={styles.secondaryBtnText}>
                 Tetap Buat Laporan Baru
               </Text>
@@ -164,6 +169,8 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   badgeWarning: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: colors.warningLight,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs,
@@ -171,6 +178,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
     borderWidth: 1,
     borderColor: colors.warning,
+    gap: 4,
   },
   badgeWarningText: {
     color: colors.warning,
@@ -256,11 +264,16 @@ const styles = StyleSheet.create({
     borderLeftWidth: 4,
     borderLeftColor: colors.primary,
   },
+  infoTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginBottom: 2,
+  },
   infoTitle: {
     fontSize: typography.size.sm,
     fontWeight: typography.weight.bold,
     color: colors.primary,
-    marginBottom: 2,
   },
   infoDesc: {
     fontSize: typography.size.xs,
@@ -272,10 +285,13 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   primaryBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: colors.primary,
     paddingVertical: spacing.md,
     borderRadius: radii.lg,
-    alignItems: 'center',
+    gap: spacing.xs,
   },
   primaryBtnText: {
     color: colors.textInverse,
@@ -283,12 +299,15 @@ const styles = StyleSheet.create({
     fontSize: typography.size.base,
   },
   secondaryBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: colors.surfaceSubtle,
     paddingVertical: spacing.md,
     borderRadius: radii.lg,
-    alignItems: 'center',
     borderWidth: 1,
     borderColor: colors.borderDark,
+    gap: spacing.xs,
   },
   secondaryBtnText: {
     color: colors.textMain,

@@ -1,525 +1,334 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
+  FlatList,
   Pressable,
-  Alert,
-  Modal,
+  RefreshControl,
+  ScrollView,
 } from 'react-native';
-import { useLocationTracking } from '../../hooks/useLocationTracking';
+import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, radii, typography, shadows } from '../../constants/tokens';
-import { MOCK_INCIDENTS, CAMPUS_CENTER } from '../../data/mockIncidents';
+import { MOCK_INCIDENTS } from '../../data/mockIncidents';
 import {
   CATEGORY_METADATA,
-  SEVERITY_METADATA,
-  STATUS_METADATA,
   type IncidentItem,
+  type IncidentCategory,
 } from '../../types/incident';
-import { calculateHaversineDistance, formatDistance } from '../../lib/actions/geo.actions';
-import { MapViewLBS } from '../../components/map/MapViewLBS';
-import { IncidentSummaryCard } from '../../components/map/IncidentSummaryCard';
-import { DuplicateDetectionModal } from '../../components/map/DuplicateDetectionModal';
+import { useLocationTracking } from '../../hooks/useLocationTracking';
+import { useAuth } from '../../hooks/useAuth';
+import { IncidentFeedCard } from '../../components/feed/IncidentFeedCard';
+import { AuthSheet } from '../../components/auth/AuthSheet';
+
+const ALL_CATEGORIES: Array<{ key: 'all' | IncidentCategory; label: string; icon: any }> = [
+  { key: 'all', label: 'Semua', icon: 'grid-outline' },
+  { key: 'bencana', label: 'Bencana', icon: 'warning-outline' },
+  { key: 'drainase', label: 'Drainase', icon: 'water-outline' },
+  { key: 'listrik', label: 'Listrik', icon: 'flash-outline' },
+  { key: 'fasilitas', label: 'Fasilitas', icon: 'construct-outline' },
+  { key: 'kebersihan', label: 'Kebersihan', icon: 'trash-outline' },
+  { key: 'pohon', label: 'Pohon', icon: 'leaf-outline' },
+];
 
 /**
- * Layar Tab 1: Peta Interaktif & LBS (Pertemuan 9 & PRD F-10, F-11, F-12)
- * Fokus: LBS, Komputasi Spasial Haversine, Visualisasi Radius 25m, Deteksi Duplikat.
+ * Tab 1 (Paling Kiri): Lini Masa Postingan Insiden Kampus (PRD F-10 & F-20)
+ * Desain ala Instagram + Quora: Card laporan, foto watermark, tombol "Masih ada di sini".
  */
-export default function MapScreen() {
-  const { coords, isLoading, permissionGranted, errorMsg, refresh } =
-    useLocationTracking({
-      distanceInterval: 5,
-      timeInterval: 4000,
-    });
+export default function FeedScreen() {
+  const router = useRouter();
+  const { coords, getDistanceTo } = useLocationTracking();
+  const { isAuthenticated } = useAuth();
 
-  const [selectedIncident, setSelectedIncident] = useState<IncidentItem | null>(
-    MOCK_INCIDENTS[0]
+  const [incidents, setIncidents] = useState<IncidentItem[]>(MOCK_INCIDENTS);
+  const [selectedCategory, setSelectedCategory] = useState<'all' | IncidentCategory>('all');
+  const [refreshing, setRefreshing] = useState<boolean>(false);
+  const [upvotedIncidentIds, setUpvotedIncidentIds] = useState<Set<string>>(new Set());
+  const [authSheetVisible, setAuthSheetVisible] = useState<boolean>(false);
+
+  // Filter daftar insiden
+  const filteredIncidents = useMemo(() => {
+    if (selectedCategory === 'all') return incidents;
+    return incidents.filter((inc) => inc.category === selectedCategory);
+  }, [incidents, selectedCategory]);
+
+  // Pull to refresh simulation
+  const handleRefresh = useCallback(() => {
+    setRefreshing(true);
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 600);
+  }, []);
+
+  // Upvote ("Masih ada di sini") handler
+  const handleUpvote = useCallback(
+    (incidentId: string) => {
+      // Jika belum terotentikasi, pemicu login di akhir (Deferred Auth)
+      if (!isAuthenticated) {
+        setAuthSheetVisible(true);
+        return;
+      }
+
+      setUpvotedIncidentIds((prev) => {
+        const next = new Set(prev);
+        const hasVoted = next.has(incidentId);
+
+        if (hasVoted) {
+          next.delete(incidentId);
+        } else {
+          next.add(incidentId);
+        }
+
+        // Update counter lokal
+        setIncidents((currentList) =>
+          currentList.map((item) => {
+            if (item.id === incidentId) {
+              return {
+                ...item,
+                confirmationsCount: hasVoted
+                  ? Math.max(0, item.confirmationsCount - 1)
+                  : item.confirmationsCount + 1,
+              };
+            }
+            return item;
+          })
+        );
+
+        return next;
+      });
+    },
+    [isAuthenticated]
   );
-  const [duplicateModalVisible, setDuplicateModalVisible] = useState(false);
-  const [duplicateTarget, setDuplicateTarget] = useState<IncidentItem | null>(null);
-  const [detailModalVisible, setDetailModalVisible] = useState(false);
-  const [detailTarget, setDetailTarget] = useState<IncidentItem | null>(null);
 
-  const effectiveCoords = useMemo(() => {
-    return coords
-      ? { latitude: coords.latitude, longitude: coords.longitude }
-      : CAMPUS_CENTER;
-  }, [coords]);
+  // Buka peta untuk insiden tersebut
+  const handleOpenMap = useCallback(
+    (_incident: IncidentItem) => {
+      router.push('/(tabs)/map');
+    },
+    [router]
+  );
 
-  const selectedDistance = useMemo(() => {
-    if (!selectedIncident) return null;
-    return calculateHaversineDistance(effectiveCoords, selectedIncident.coordinates);
-  }, [effectiveCoords, selectedIncident]);
+  const renderItem = useCallback(
+    ({ item }: { item: IncidentItem }) => {
+      const distance = getDistanceTo(item.coordinates);
+      const isUpvoted = upvotedIncidentIds.has(item.id);
 
-  const handleCheckDuplicate = (incident: IncidentItem) => {
-    setDuplicateTarget(incident);
-    setDuplicateModalVisible(true);
-  };
-
-  const handleViewDetail = (incident: IncidentItem) => {
-    setDetailTarget(incident);
-    setDetailModalVisible(true);
-  };
-
-  const handleMergeDuplicate = (existingId: string) => {
-    setDuplicateModalVisible(false);
-    Alert.alert(
-      '✓ Berhasil Menggabungkan!',
-      `Bukti laporan Anda telah ditambahkan ke laporan #${existingId}. Ini meningkatkan bobot prioritas ke pihak sarpras/K3 tanpa menduplikasi data di peta (PRD F-12).`
-    );
-  };
-
-  const handleCreateNewReport = () => {
-    setDuplicateModalVisible(false);
-    Alert.alert(
-      'Opsi Laporan Baru',
-      'Koordinat GPS terkunci di lokasi ini. Form pembuatan laporan lengkap dengan foto watermark tersedia pada Pertemuan 10.'
-    );
-  };
+      return (
+        <IncidentFeedCard
+          incident={item}
+          distanceMeters={distance}
+          hasUpvoted={isUpvoted}
+          onUpvote={handleUpvote}
+          onOpenMap={handleOpenMap}
+        />
+      );
+    },
+    [getDistanceTo, upvotedIncidentIds, handleUpvote, handleOpenMap]
+  );
 
   return (
-    <View style={styles.screen}>
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Banner Status Kampus Siaga & Sub-CPMK 7 */}
-        <View style={styles.statusBanner}>
-          <View style={styles.bannerIconBox}>
-            <Text style={styles.bannerIcon}>🛡️</Text>
+    <View style={styles.container}>
+      {/* 1. Header Aplikasi */}
+      <View style={styles.topHeader}>
+        <View style={styles.brandRow}>
+          <View style={styles.logoBadge}>
+            <Ionicons name="shield-checkmark" size={20} color={colors.textInverse} />
           </View>
-          <View style={styles.bannerTextBox}>
-            <Text style={styles.bannerTitle}>Kesiapsiagaan & LBS Kampus</Text>
-            <Text style={styles.bannerSubtitle}>
-              Pertemuan 9 • Komputasi Haversine & Deteksi Duplikat 25m (Sub-CPMK 7)
-            </Text>
+          <View>
+            <Text style={styles.brandTitle}>MAMORI</Text>
+            <Text style={styles.brandSubtitle}>Lini Masa Pantauan Risiko</Text>
           </View>
         </View>
 
-        {/* Peta Interaktif & Marker LBS */}
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Peta Insiden & Posisi Terkini</Text>
-          <Text style={styles.badgeCount}>
-            {MOCK_INCIDENTS.length} Titik Terpantau
-          </Text>
-        </View>
-
-        <MapViewLBS
-          userCoords={effectiveCoords}
-          permissionGranted={permissionGranted}
-          isLoadingGPS={isLoading}
-          gpsError={errorMsg}
-          incidents={MOCK_INCIDENTS}
-          selectedIncident={selectedIncident}
-          onSelectIncident={(inc) => setSelectedIncident(inc)}
-          onRefreshGPS={refresh}
-        />
-
-        {/* Keterangan Jarak & Penjelasan Haversine */}
-        <View style={styles.haversineExplainerCard}>
-          <View style={styles.rowAlign}>
-            <Text style={styles.explainerIcon}>📐</Text>
-            <Text style={styles.explainerTitle}>
-              Komputasi Spasial Sisi Klien (Haversine)
-            </Text>
-          </View>
-          <Text style={styles.explainerBody}>
-            Jarak setiap insiden dihitung real-time dari posisi GPS Anda. Jika
-            laporan baru dibuat dalam radius <Text style={styles.boldText}>≤ 25 meter</Text>{' '}
-            dengan kategori serupa, sistem otomatis mendeteksi kandidat duplikat
-            (PRD F-11 & F-12).
-          </Text>
-        </View>
-
-        {/* Floating Card Insiden Terpilih */}
-        {selectedIncident && (
-          <View style={styles.selectedContainer}>
-            <Text style={styles.selectedHeading}>Insiden Dipilih di Peta:</Text>
-            <IncidentSummaryCard
-              incident={selectedIncident}
-              userCoords={effectiveCoords}
-              haversineDistance={selectedDistance}
-              onCheckDuplicate={handleCheckDuplicate}
-              onViewDetails={handleViewDetail}
-              onClose={() => setSelectedIncident(null)}
-            />
-          </View>
-        )}
-
-        {/* Simulasi Tombol Lapor di Lokasi Ini */}
-        <View style={styles.quickActionBox}>
-          <Pressable
-            style={({ pressed }) => [
-              styles.quickReportBtn,
-              pressed && styles.btnPressed,
-            ]}
-            onPress={() =>
-              Alert.alert(
-                '📍 Lapor di Koordinat Ini',
-                `Koordinat Anda: ${effectiveCoords.latitude.toFixed(5)}, ${effectiveCoords.longitude.toFixed(5)}.\n\nFormulir pelaporan 4 langkah lengkap dengan foto watermark kamera akan dibuka di Pertemuan 10 (feat/ui-pertemuan-10).`
-              )
-            }
-          >
-            <Text style={styles.quickReportBtnText}>
-              + Buat Laporan di Lokasi Ini (P10)
-            </Text>
-          </Pressable>
-        </View>
-      </ScrollView>
-
-      {/* Modal Dialog Deteksi Duplikat 25m (PRD F-11 & F-12) */}
-      <DuplicateDetectionModal
-        visible={duplicateModalVisible}
-        existingIncident={duplicateTarget}
-        distanceMeters={
-          duplicateTarget
-            ? calculateHaversineDistance(effectiveCoords, duplicateTarget.coordinates)
-            : 0
-        }
-        onMerge={handleMergeDuplicate}
-        onCreateNew={handleCreateNewReport}
-        onCancel={() => setDuplicateModalVisible(false)}
-      />
-
-      {/* Modal Detail Ringkas Insiden (Pertemuan 9) */}
-      {detailTarget && (
-        <Modal
-          visible={detailModalVisible}
-          transparent
-          animationType="slide"
-          onRequestClose={() => setDetailModalVisible(false)}
+        <Pressable
+          style={({ pressed }) => [styles.searchBtn, pressed && styles.btnPressed]}
+          onPress={() => router.push('/(tabs)/map')}
         >
-          <View style={styles.modalOverlay}>
-            <View style={styles.detailModalCard}>
-              <View style={styles.detailHeaderRow}>
-                <View
+          <Ionicons name="map-outline" size={20} color={colors.primary} />
+        </Pressable>
+      </View>
+
+      {/* 2. Chip Filter Kategori Horizontal */}
+      <View style={styles.filterContainer}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.filterScroll}
+        >
+          {ALL_CATEGORIES.map((cat) => {
+            const isSelected = selectedCategory === cat.key;
+            return (
+              <Pressable
+                key={cat.key}
+                style={[
+                  styles.filterChip,
+                  isSelected && styles.filterChipSelected,
+                ]}
+                onPress={() => setSelectedCategory(cat.key)}
+              >
+                <Ionicons
+                  name={cat.icon}
+                  size={14}
+                  color={isSelected ? colors.textInverse : colors.textMain}
+                />
+                <Text
                   style={[
-                    styles.catBadge,
-                    {
-                      backgroundColor:
-                        CATEGORY_METADATA[detailTarget.category].bgColor,
-                      borderColor:
-                        CATEGORY_METADATA[detailTarget.category].color,
-                    },
+                    styles.filterChipText,
+                    isSelected && styles.filterChipTextSelected,
                   ]}
                 >
-                  <Text
-                    style={[
-                      styles.catBadgeText,
-                      { color: CATEGORY_METADATA[detailTarget.category].color },
-                    ]}
-                  >
-                    {CATEGORY_METADATA[detailTarget.category].label}
-                  </Text>
-                </View>
-                <Pressable
-                  onPress={() => setDetailModalVisible(false)}
-                  style={styles.closeModalBtn}
-                >
-                  <Text style={styles.closeModalText}>✕</Text>
-                </Pressable>
-              </View>
-
-              <Text style={styles.detailModalTitle}>{detailTarget.title}</Text>
-              <Text style={styles.detailModalDesc}>
-                {detailTarget.description}
-              </Text>
-
-              {detailTarget.evacuationBarrier && (
-                <View style={styles.evacAlertBox}>
-                  <Text style={styles.evacAlertText}>
-                    🚨 Menghalangi Jalur Evakuasi Kampus (Prioritas K3)
-                  </Text>
-                </View>
-              )}
-
-              <View style={styles.detailMetaGrid}>
-                <View style={styles.metaCell}>
-                  <Text style={styles.metaCellLabel}>Tingkat Keparahan</Text>
-                  <Text
-                    style={[
-                      styles.metaCellValue,
-                      {
-                        color:
-                          SEVERITY_METADATA[detailTarget.severity].color,
-                      },
-                    ]}
-                  >
-                    {SEVERITY_METADATA[detailTarget.severity].label}
-                  </Text>
-                </View>
-
-                <View style={styles.metaCell}>
-                  <Text style={styles.metaCellLabel}>Status Penanganan</Text>
-                  <Text
-                    style={[
-                      styles.metaCellValue,
-                      {
-                        color: STATUS_METADATA[detailTarget.status].color,
-                      },
-                    ]}
-                  >
-                    {STATUS_METADATA[detailTarget.status].label}
-                  </Text>
-                </View>
-
-                <View style={styles.metaCell}>
-                  <Text style={styles.metaCellLabel}>Jarak dari Anda</Text>
-                  <Text style={styles.metaCellValue}>
-                    {formatDistance(
-                      calculateHaversineDistance(
-                        effectiveCoords,
-                        detailTarget.coordinates
-                      )
-                    )}
-                  </Text>
-                </View>
-
-                <View style={styles.metaCell}>
-                  <Text style={styles.metaCellLabel}>Validasi Komunitas</Text>
-                  <Text style={styles.metaCellValue}>
-                    {detailTarget.confirmationsCount} Konfirmasi
-                  </Text>
-                </View>
-              </View>
-
-              <Pressable
-                style={styles.closeDetailBtn}
-                onPress={() => setDetailModalVisible(false)}
-              >
-                <Text style={styles.closeDetailBtnText}>Tutup</Text>
+                  {cat.label}
+                </Text>
               </Pressable>
-            </View>
+            );
+          })}
+        </ScrollView>
+      </View>
+
+      {/* 3. Feed List */}
+      <FlatList
+        data={filteredIncidents}
+        keyExtractor={(item) => item.id}
+        renderItem={renderItem}
+        contentContainerStyle={styles.feedList}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor={colors.primary}
+            colors={[colors.primary]}
+          />
+        }
+        ListEmptyComponent={
+          <View style={styles.emptyContainer}>
+            <Ionicons name="document-text-outline" size={48} color={colors.borderDark} />
+            <Text style={styles.emptyTitle}>Tidak ada laporan aktif</Text>
+            <Text style={styles.emptyDesc}>
+              Belum ada laporan pada kategori ini. Anda dapat melaporkan temuan masalah
+              di kampus menggunakan tombol Lapor di bawah.
+            </Text>
           </View>
-        </Modal>
-      )}
+        }
+      />
+
+      {/* Auth Sheet untuk Deferred Login */}
+      <AuthSheet
+        visible={authSheetVisible}
+        onClose={() => setAuthSheetVisible(false)}
+        title="Masuk untuk Konfirmasi"
+        subtitle="Konfirmasi 'Masih ada di sini' memerlukan akun civitas kampus agar suara Anda tercatat dan diverifikasi."
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: {
+  container: {
     flex: 1,
     backgroundColor: colors.background,
   },
-  scrollContent: {
-    padding: spacing.lg,
-    paddingBottom: spacing.xxxl * 2,
-  },
-  statusBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.primaryLight,
-    padding: spacing.md,
-    borderRadius: radii.lg,
-    borderWidth: 1,
-    borderColor: '#BFDBFE',
-    marginBottom: spacing.lg,
-  },
-  bannerIconBox: {
-    width: 40,
-    height: 40,
-    borderRadius: radii.md,
-    backgroundColor: colors.surface,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: spacing.md,
-    ...shadows.sm,
-  },
-  bannerIcon: {
-    fontSize: 20,
-  },
-  bannerTextBox: {
-    flex: 1,
-  },
-  bannerTitle: {
-    fontSize: typography.size.base,
-    fontWeight: typography.weight.bold,
-    color: colors.primary,
-  },
-  bannerSubtitle: {
-    fontSize: typography.size.xs,
-    color: colors.textMuted,
-    marginTop: 2,
-  },
-  sectionHeader: {
+  topHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: spacing.sm,
-  },
-  sectionTitle: {
-    fontSize: typography.size.base,
-    fontWeight: typography.weight.bold,
-    color: colors.textMain,
-  },
-  badgeCount: {
-    fontSize: typography.size.xs,
-    fontWeight: typography.weight.semibold,
-    color: colors.primary,
-    backgroundColor: colors.primaryLight,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 2,
-    borderRadius: radii.full,
-  },
-  haversineExplainerCard: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.xl,
+    paddingBottom: spacing.sm,
     backgroundColor: colors.surface,
-    padding: spacing.md,
-    borderRadius: radii.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
-    marginTop: spacing.md,
-    ...shadows.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
   },
-  rowAlign: {
+  brandRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: spacing.xs,
+    gap: spacing.sm,
+  },
+  logoBadge: {
+    width: 36,
+    height: 36,
+    borderRadius: radii.md,
+    backgroundColor: colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...shadows.sm,
+  },
+  brandTitle: {
+    fontSize: typography.size.base,
+    fontWeight: typography.weight.bold,
+    color: colors.primary,
+    letterSpacing: 0.5,
+  },
+  brandSubtitle: {
+    fontSize: typography.size.xs,
+    color: colors.textMuted,
+  },
+  searchBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: radii.full,
+    backgroundColor: colors.primaryLight,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  filterContainer: {
+    backgroundColor: colors.surface,
+    paddingVertical: spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  filterScroll: {
+    paddingHorizontal: spacing.md,
     gap: spacing.xs,
   },
-  explainerIcon: {
-    fontSize: 16,
+  filterChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surfaceSubtle,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 6,
+    borderRadius: radii.full,
+    borderWidth: 1,
+    borderColor: colors.border,
+    gap: 6,
   },
-  explainerTitle: {
-    fontSize: typography.size.sm,
+  filterChipSelected: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  filterChipText: {
+    fontSize: typography.size.xs,
+    fontWeight: typography.weight.medium,
+    color: colors.textMain,
+  },
+  filterChipTextSelected: {
+    color: colors.textInverse,
+    fontWeight: typography.weight.bold,
+  },
+  feedList: {
+    padding: spacing.md,
+    paddingBottom: 80,
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.xxl,
+    paddingHorizontal: spacing.xl,
+    gap: spacing.sm,
+  },
+  emptyTitle: {
+    fontSize: typography.size.base,
     fontWeight: typography.weight.bold,
     color: colors.textMain,
   },
-  explainerBody: {
-    fontSize: typography.size.xs,
-    color: colors.textMuted,
-    lineHeight: 18,
-  },
-  boldText: {
-    fontWeight: typography.weight.bold,
-    color: colors.danger,
-  },
-  selectedContainer: {
-    marginTop: spacing.lg,
-  },
-  selectedHeading: {
+  emptyDesc: {
     fontSize: typography.size.sm,
-    fontWeight: typography.weight.semibold,
     color: colors.textMuted,
-    marginBottom: spacing.xs,
-  },
-  quickActionBox: {
-    marginTop: spacing.xl,
-  },
-  quickReportBtn: {
-    backgroundColor: colors.primary,
-    paddingVertical: spacing.md,
-    borderRadius: radii.xl,
-    alignItems: 'center',
-    ...shadows.md,
-  },
-  quickReportBtnText: {
-    color: colors.textInverse,
-    fontWeight: typography.weight.bold,
-    fontSize: typography.size.base,
+    textAlign: 'center',
+    lineHeight: 20,
   },
   btnPressed: {
-    opacity: 0.85,
-    transform: [{ scale: 0.98 }],
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: colors.overlay,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: spacing.lg,
-  },
-  detailModalCard: {
-    backgroundColor: colors.surface,
-    borderRadius: radii.xl,
-    padding: spacing.xl,
-    width: '100%',
-    ...shadows.lg,
-  },
-  detailHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: spacing.sm,
-  },
-  catBadge: {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 2,
-    borderRadius: radii.sm,
-    borderWidth: 1,
-  },
-  catBadgeText: {
-    fontSize: typography.size.xs,
-    fontWeight: typography.weight.bold,
-  },
-  closeModalBtn: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: colors.surfaceSubtle,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  closeModalText: {
-    fontSize: 12,
-    color: colors.textMuted,
-    fontWeight: typography.weight.bold,
-  },
-  detailModalTitle: {
-    fontSize: typography.size.lg,
-    fontWeight: typography.weight.bold,
-    color: colors.textMain,
-    marginBottom: spacing.xs,
-  },
-  detailModalDesc: {
-    fontSize: typography.size.sm,
-    color: colors.textMuted,
-    lineHeight: 20,
-    marginBottom: spacing.md,
-  },
-  evacAlertBox: {
-    backgroundColor: colors.dangerLight,
-    padding: spacing.sm,
-    borderRadius: radii.sm,
-    marginBottom: spacing.md,
-  },
-  evacAlertText: {
-    fontSize: typography.size.xs,
-    color: colors.danger,
-    fontWeight: typography.weight.bold,
-  },
-  detailMetaGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    backgroundColor: colors.surfaceSubtle,
-    borderRadius: radii.md,
-    padding: spacing.sm,
-    gap: spacing.sm,
-    marginBottom: spacing.lg,
-  },
-  metaCell: {
-    width: '48%',
-  },
-  metaCellLabel: {
-    fontSize: 10,
-    color: colors.textMuted,
-  },
-  metaCellValue: {
-    fontSize: typography.size.xs,
-    fontWeight: typography.weight.bold,
-    color: colors.textMain,
-    marginTop: 2,
-  },
-  closeDetailBtn: {
-    backgroundColor: colors.primary,
-    paddingVertical: spacing.md,
-    borderRadius: radii.lg,
-    alignItems: 'center',
-  },
-  closeDetailBtnText: {
-    color: colors.textInverse,
-    fontWeight: typography.weight.bold,
-    fontSize: typography.size.sm,
+    opacity: 0.8,
   },
 });
