@@ -2,7 +2,7 @@ import React from 'react';
 import { Stack } from 'expo-router';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'react-native';
-import { colors } from '../lib/constants/tokens';
+import { colors } from '../constants/tokens';
 
 export default function RootLayout() {
   return (

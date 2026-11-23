@@ -9,14 +9,14 @@ import {
   Modal,
 } from 'react-native';
 import { useLocationTracking } from '../../hooks/useLocationTracking';
-import { colors, spacing, radii, typography, shadows } from '../../lib/constants/tokens';
+import { colors, spacing, radii, typography, shadows } from '../../constants/tokens';
 import { MOCK_INCIDENTS, CAMPUS_CENTER } from '../../data/mockIncidents';
 import {
   CATEGORY_METADATA,
   SEVERITY_METADATA,
   STATUS_METADATA,
   type IncidentItem,
-} from '../../lib/types/incident.types';
+} from '../../types/incident';
 import { calculateHaversineDistance, formatDistance } from '../../lib/actions/geo.actions';
 import { MapViewLBS } from '../../components/map/MapViewLBS';
 import { IncidentSummaryCard } from '../../components/map/IncidentSummaryCard';

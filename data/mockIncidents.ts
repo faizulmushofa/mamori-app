@@ -1,4 +1,4 @@
-import type { IncidentItem } from '../lib/types/incident.types';
+import type { IncidentItem } from '../types/incident';
 import type { Coordinates } from '../lib/types/geo.types';
 
 export const CAMPUS_CENTER: Coordinates = {

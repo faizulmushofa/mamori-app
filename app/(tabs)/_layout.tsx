@@ -1,7 +1,7 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
 import { Text } from 'react-native';
-import { colors, typography } from '../../lib/constants/tokens';
+import { colors, typography } from '../../constants/tokens';
 
 export default function TabLayout() {
   return (

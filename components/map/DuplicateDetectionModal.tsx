@@ -7,8 +7,8 @@ import {
   Pressable,
   ScrollView,
 } from 'react-native';
-import { colors, spacing, radii, typography, shadows } from '../../lib/constants/tokens';
-import { CATEGORY_METADATA, type IncidentItem } from '../../lib/types/incident.types';
+import { colors, spacing, radii, typography, shadows } from '../../constants/tokens';
+import { CATEGORY_METADATA, type IncidentItem } from '../../types/incident';
 import { formatDistance } from '../../lib/actions/geo.actions';
 
 interface DuplicateDetectionModalProps {

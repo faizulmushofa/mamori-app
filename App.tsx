@@ -6,7 +6,7 @@ import {
   StatusBar,
 } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
-import { colors, spacing, radii, typography, shadows } from './lib/constants/tokens';
+import { colors, spacing, radii, typography, shadows } from './constants/tokens';
 
 // Import Screen Pertemuan 9: Peta LBS
 import MapScreen from './app/(tabs)/index';

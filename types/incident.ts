@@ -1,4 +1,4 @@
-import type { Coordinates } from './geo.types';
+import type { Coordinates } from '../lib/types/geo.types';
 
 export type IncidentCategory =
   | 'fasilitas'

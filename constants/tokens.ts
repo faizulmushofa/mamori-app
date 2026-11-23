@@ -1,5 +1,5 @@
 /**
- * MAMORI Design Tokens
+ * MAMORI Frontend Design Tokens
  * Tema: Civic Infrastructure & Campus Disaster Mitigation (SDG 11)
  */
 

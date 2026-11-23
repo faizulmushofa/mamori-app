@@ -1,12 +1,12 @@
 import React from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
-import { colors, spacing, radii, typography, shadows } from '../../lib/constants/tokens';
+import { colors, spacing, radii, typography, shadows } from '../../constants/tokens';
 import {
   CATEGORY_METADATA,
   SEVERITY_METADATA,
   STATUS_METADATA,
   type IncidentItem,
-} from '../../lib/types/incident.types';
+} from '../../types/incident';
 import { formatDistance } from '../../lib/actions/geo.actions';
 import type { Coordinates } from '../../lib/types/geo.types';
 
