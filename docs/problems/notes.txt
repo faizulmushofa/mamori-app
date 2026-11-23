@@ -1,0 +1,7 @@
+Masalah Monday,23 November 2026
+
+1.  Masalah ketika terjadi bencana dan sinyal terputus bagaimanapun
+    caranya sinyal draft harus terkirim walaupun sinyal aalah E skala jaringan terkecil artinya itu membuatuhkan konfigurasi dari beberapa hal
+    battery,payload kecil dan protokol jaringan yang memadai
+
+2. 
