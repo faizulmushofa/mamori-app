@@ -30,20 +30,6 @@ export default function TabLayout() {
           tabBarIcon: () => <Text style={{ fontSize: 18 }}>🗺️</Text>,
         }}
       />
-      <Tabs.Screen
-        name="report"
-        options={{
-          title: 'Lapor',
-          tabBarIcon: () => <Text style={{ fontSize: 18 }}>📷</Text>,
-        }}
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: 'Akun',
-          tabBarIcon: () => <Text style={{ fontSize: 18 }}>👤</Text>,
-        }}
-      />
     </Tabs>
   );
 }
