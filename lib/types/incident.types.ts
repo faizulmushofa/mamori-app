@@ -1,4 +1,4 @@
-import type { Coordinates } from './haversine';
+import type { Coordinates } from './geo.types';
 
 export type IncidentCategory =
   | 'fasilitas'
@@ -79,7 +79,7 @@ export const CATEGORY_METADATA: Record<
   listrik: {
     label: 'Listrik/Penerangan',
     icon: 'bolt',
-    color: '#D97706',
+    color: '#F59E0B',
     bgColor: '#FFFBEB',
   },
   bencana: {

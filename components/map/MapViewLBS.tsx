@@ -6,17 +6,18 @@ import {
   Pressable,
   ActivityIndicator,
 } from 'react-native';
-import { colors, spacing, radii, typography, shadows } from '../../lib/tokens';
+import { colors, spacing, radii, typography, shadows } from '../../lib/constants/tokens';
 import {
   CATEGORY_METADATA,
   SEVERITY_METADATA,
   type IncidentItem,
-} from '../../lib/types';
+} from '../../lib/types/incident.types';
 import {
   calculateHaversineDistance,
   formatDistance,
-  type Coordinates,
-} from '../../lib/haversine';
+  isDuplicateCandidate,
+} from '../../lib/actions/geo.actions';
+import type { Coordinates } from '../../lib/types/geo.types';
 
 interface MapViewLBSProps {
   userCoords: Coordinates | null;

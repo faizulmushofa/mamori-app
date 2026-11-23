@@ -1,13 +1,14 @@
 import React from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
-import { colors, spacing, radii, typography, shadows } from '../../lib/tokens';
+import { colors, spacing, radii, typography, shadows } from '../../lib/constants/tokens';
 import {
   CATEGORY_METADATA,
   SEVERITY_METADATA,
   STATUS_METADATA,
   type IncidentItem,
-} from '../../lib/types';
-import { formatDistance, type Coordinates } from '../../lib/haversine';
+} from '../../lib/types/incident.types';
+import { formatDistance } from '../../lib/actions/geo.actions';
+import type { Coordinates } from '../../lib/types/geo.types';
 
 interface IncidentSummaryCardProps {
   incident: IncidentItem;
