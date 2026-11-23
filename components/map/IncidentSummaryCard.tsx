@@ -1,13 +1,15 @@
 import React from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
-import { colors, spacing, radii, typography, shadows } from '../../lib/tokens';
+import { Ionicons } from '@expo/vector-icons';
+import { colors, spacing, radii, typography, shadows } from '../../constants/tokens';
 import {
   CATEGORY_METADATA,
   SEVERITY_METADATA,
   STATUS_METADATA,
   type IncidentItem,
-} from '../../lib/types';
-import { formatDistance, type Coordinates } from '../../lib/haversine';
+} from '../../types/incident';
+import { formatDistance } from '../../lib/actions/geo.actions';
+import type { Coordinates } from '../../lib/types/geo.types';
 
 interface IncidentSummaryCardProps {
   incident: IncidentItem;
@@ -67,7 +69,7 @@ export const IncidentSummaryCard: React.FC<IncidentSummaryCardProps> = ({
             onPress={onClose}
             style={({ pressed }) => [styles.closeBtn, pressed && styles.btnPressed]}
           >
-            <Text style={styles.closeBtnText}>✕</Text>
+            <Ionicons name="close" size={18} color={colors.textMuted} />
           </Pressable>
         )}
       </View>
@@ -81,7 +83,7 @@ export const IncidentSummaryCard: React.FC<IncidentSummaryCardProps> = ({
 
       {incident.evacuationBarrier && (
         <View style={styles.evacWarningRow}>
-          <Text style={styles.evacWarningIcon}>⚠️</Text>
+          <Ionicons name="warning" size={16} color={colors.danger} />
           <Text style={styles.evacWarningText}>
             Menghalangi Jalur Evakuasi Kampus (Prioritas K3)
           </Text>
@@ -130,7 +132,8 @@ export const IncidentSummaryCard: React.FC<IncidentSummaryCardProps> = ({
             ]}
             onPress={() => onCheckDuplicate(incident)}
           >
-            <Text style={styles.duplicateBtnText}>🔍 Uji Radius 25m</Text>
+            <Ionicons name="scan-outline" size={16} color={colors.primary} />
+            <Text style={styles.duplicateBtnText}>Uji Radius 25m</Text>
           </Pressable>
         )}
 
@@ -142,7 +145,8 @@ export const IncidentSummaryCard: React.FC<IncidentSummaryCardProps> = ({
             ]}
             onPress={() => onViewDetails(incident)}
           >
-            <Text style={styles.detailsBtnText}>Lihat Detail →</Text>
+            <Text style={styles.detailsBtnText}>Lihat Detail</Text>
+            <Ionicons name="arrow-forward" size={14} color={colors.textInverse} />
           </Pressable>
         )}
       </View>
@@ -155,25 +159,24 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderRadius: radii.xl,
     padding: spacing.lg,
+    ...shadows.lg,
     borderWidth: 1,
     borderColor: colors.border,
-    ...shadows.lg,
   },
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: spacing.xs,
+    marginBottom: spacing.sm,
   },
   tagsGroup: {
     flexDirection: 'row',
     gap: spacing.xs,
-    flexWrap: 'wrap',
   },
   badge: {
     paddingHorizontal: spacing.sm,
-    paddingVertical: 2,
-    borderRadius: radii.sm,
+    paddingVertical: 3,
+    borderRadius: radii.xs,
     borderWidth: 1,
   },
   badgeText: {
@@ -181,62 +184,51 @@ const styles = StyleSheet.create({
     fontWeight: typography.weight.bold,
   },
   closeBtn: {
-    width: 28,
-    height: 28,
+    padding: spacing.xs,
     borderRadius: radii.full,
     backgroundColor: colors.surfaceSubtle,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  closeBtnText: {
-    fontSize: typography.size.sm,
-    color: colors.textMuted,
-    fontWeight: typography.weight.bold,
   },
   title: {
     fontSize: typography.size.base,
     fontWeight: typography.weight.bold,
     color: colors.textMain,
-    marginTop: spacing.xs,
+    marginBottom: 4,
   },
   description: {
     fontSize: typography.size.sm,
     color: colors.textMuted,
-    marginTop: 2,
     lineHeight: 18,
+    marginBottom: spacing.md,
   },
   evacWarningRow: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.dangerLight,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderRadius: radii.sm,
-    marginTop: spacing.sm,
+    padding: spacing.sm,
+    borderRadius: radii.md,
+    marginBottom: spacing.md,
     gap: spacing.xs,
   },
-  evacWarningIcon: {
-    fontSize: 14,
-  },
   evacWarningText: {
-    fontSize: typography.size.xs,
     color: colors.danger,
+    fontSize: typography.size.xs,
     fontWeight: typography.weight.semibold,
+    flex: 1,
   },
   statsContainer: {
     flexDirection: 'row',
-    backgroundColor: colors.surfaceSubtle,
-    borderRadius: radii.md,
-    padding: spacing.sm,
-    marginTop: spacing.md,
     justifyContent: 'space-between',
+    backgroundColor: colors.surfaceSubtle,
+    borderRadius: radii.lg,
+    padding: spacing.md,
+    marginBottom: spacing.md,
   },
   statBox: {
     flex: 1,
     alignItems: 'center',
   },
   statLabel: {
-    fontSize: 10,
+    fontSize: typography.size.xs,
     color: colors.textMuted,
     marginBottom: 2,
   },
@@ -254,45 +246,51 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   radiusPill: {
-    backgroundColor: colors.danger,
+    backgroundColor: colors.dangerLight,
     paddingHorizontal: 4,
+    paddingVertical: 1,
     borderRadius: radii.xs,
   },
   radiusPillText: {
-    color: colors.textInverse,
     fontSize: 9,
+    color: colors.danger,
     fontWeight: typography.weight.bold,
   },
   actionsRow: {
     flexDirection: 'row',
-    marginTop: spacing.md,
     gap: spacing.sm,
   },
   duplicateBtn: {
     flex: 1,
-    backgroundColor: colors.warningLight,
-    borderColor: colors.warning,
-    borderWidth: 1,
-    paddingVertical: spacing.sm,
-    borderRadius: radii.lg,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.md,
+    borderRadius: radii.md,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    backgroundColor: colors.primaryLight,
+    gap: spacing.xs,
   },
   duplicateBtnText: {
-    color: colors.warning,
+    color: colors.primary,
+    fontSize: typography.size.xs,
     fontWeight: typography.weight.semibold,
-    fontSize: typography.size.sm,
   },
   detailsBtn: {
     flex: 1,
-    backgroundColor: colors.primary,
-    paddingVertical: spacing.sm,
-    borderRadius: radii.lg,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.md,
+    borderRadius: radii.md,
+    backgroundColor: colors.primary,
+    gap: spacing.xs,
   },
   detailsBtnText: {
     color: colors.textInverse,
+    fontSize: typography.size.xs,
     fontWeight: typography.weight.bold,
-    fontSize: typography.size.sm,
   },
   btnPressed: {
     opacity: 0.8,

@@ -1,6 +1,7 @@
-import type { IncidentItem } from './types';
+import type { IncidentItem } from '../types/incident';
+import type { Coordinates } from '../lib/types/geo.types';
 
-export const CAMPUS_CENTER = {
+export const CAMPUS_CENTER: Coordinates = {
   latitude: -7.8014,
   longitude: 110.3644,
 };

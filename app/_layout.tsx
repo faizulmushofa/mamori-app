@@ -1,13 +1,13 @@
 import React from 'react';
 import { Stack } from 'expo-router';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { StatusBar } from 'react-native';
-import { colors } from '../lib/tokens';
+import { StatusBar } from 'expo-status-bar';
+import { colors } from '../constants/tokens';
 
 export default function RootLayout() {
   return (
     <SafeAreaProvider>
-      <StatusBar barStyle="dark-content" backgroundColor={colors.surface} />
+      <StatusBar style="dark" />
       <Stack
         screenOptions={{
           headerShown: false,
@@ -16,13 +16,6 @@ export default function RootLayout() {
       >
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-        <Stack.Screen
-          name="incident/[id]"
-          options={{
-            headerShown: false,
-            presentation: 'card',
-          }}
-        />
       </Stack>
     </SafeAreaProvider>
   );
