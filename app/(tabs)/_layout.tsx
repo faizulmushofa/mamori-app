@@ -38,13 +38,6 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="feed"
-        options={{
-          title: 'Feed Status',
-          tabBarIcon: () => <Text style={{ fontSize: 18 }}>📋</Text>,
-        }}
-      />
-      <Tabs.Screen
         name="profile"
         options={{
           title: 'Akun',

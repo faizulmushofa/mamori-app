@@ -8,15 +8,13 @@ import {
 } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { colors, spacing, radii, typography, shadows } from './lib/tokens';
-import type { IncidentItem } from './lib/types';
 
-// Import Screens dari app/(tabs)
+// Import Screens dari app/(tabs) untuk Pertemuan 9 dan 10
 import MapScreen from './app/(tabs)/index';
 import ReportScreen from './app/(tabs)/report';
-import FeedScreen from './app/(tabs)/feed';
 import ProfileScreen from './app/(tabs)/profile';
 
-type TabKey = 'map_p9' | 'report_p10' | 'feed_p11' | 'profile_p10';
+type TabKey = 'map_p9' | 'report_p10' | 'profile_p10';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<TabKey>('map_p9');
@@ -50,8 +48,6 @@ export default function App() {
                 ? 'P9: LBS'
                 : activeTab === 'report_p10'
                 ? 'P10: Lapor'
-                : activeTab === 'feed_p11'
-                ? 'P11: Feed'
                 : 'P10: Akun'}
             </Text>
           </View>
@@ -61,7 +57,6 @@ export default function App() {
         <View style={styles.mainContent}>
           {activeTab === 'map_p9' && <MapScreen />}
           {activeTab === 'report_p10' && <ReportScreen />}
-          {activeTab === 'feed_p11' && <FeedScreen />}
           {activeTab === 'profile_p10' && <ProfileScreen />}
         </View>
 
@@ -103,25 +98,6 @@ export default function App() {
               Lapor
             </Text>
             <Text style={styles.subPill}>P10</Text>
-          </Pressable>
-
-          <Pressable
-            style={[
-              styles.tabItem,
-              activeTab === 'feed_p11' && styles.tabItemActive,
-            ]}
-            onPress={() => setActiveTab('feed_p11')}
-          >
-            <Text style={styles.tabIcon}>📋</Text>
-            <Text
-              style={[
-                styles.tabLabel,
-                activeTab === 'feed_p11' && styles.tabLabelActive,
-              ]}
-            >
-              Feed Status
-            </Text>
-            <Text style={styles.subPill}>P11</Text>
           </Pressable>
 
           <Pressable
