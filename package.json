@@ -16,7 +16,7 @@
     "expo-secure-store": "~15.0.8",
     "expo-status-bar": "~58.0.5",
     "react": "19.3.0",
-    "react-dom": "19.1.0",
+    "react-dom": "19.3.0",
     "react-native": "^0.83.10",
     "react-native-maps": "^1.20.1",
     "react-native-safe-area-context": "~5.6.0",
