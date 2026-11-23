@@ -1,4 +1,4 @@
-import type { Coordinates } from '../utils/types/haversine.types';
+import type { Coordinates } from '../lib/types/geo.types';
 
 /**
  * =====================================================================

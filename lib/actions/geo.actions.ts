@@ -1,4 +1,4 @@
-import type { Coordinates } from './types/haversine.types';
+import type { Coordinates } from '../types/geo.types';
 
 const EARTH_RADIUS_METERS = 6371000;
 
