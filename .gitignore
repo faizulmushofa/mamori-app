@@ -43,3 +43,8 @@ yarn-error.*
 .env
 
 .vscode
+
+schema.drawio.sql
+schema.sql
+
+
