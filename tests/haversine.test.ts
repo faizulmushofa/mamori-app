@@ -1,6 +1,6 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
-import { calculateDistance, isWithinRadius } from '../utils/haversine.ts';
+import { calculateDistance, isWithinRadius } from '../lib/actions/geo.actions.ts';
 import {
   DISTANCE_SCENARIOS,
   DUPLICATE_SCENARIOS,

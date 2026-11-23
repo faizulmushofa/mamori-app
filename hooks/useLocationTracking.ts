@@ -1,36 +1,36 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import * as Location from 'expo-location';
-import type { LocationTrackingOptions, UseLocationTrackingResult } from './types/useLocationTracking.types';
+import type * as Location from 'expo-location';
+import { getCurrentCoords, requestLocationPermission, watchCoords } from '../lib/actions/location.actions';
+import type {
+  LocationSubscription,
+  LocationTrackingOptions,
+  LocationTrackingResult,
+} from '../lib/types/location.types';
 
-export { type LocationTrackingOptions, type UseLocationTrackingResult };
+export { type LocationTrackingOptions, type LocationTrackingResult };
 
 /**
- * Custom hook for Location-Based Services (LBS) with adaptive distanceInterval.
+ * Thin React wrapper over lib/actions/location.actions.
  * Adheres to Zero Memory Leak (cleans up watchPosition on unmount).
  */
 export function useLocationTracking(
   options: LocationTrackingOptions = {}
-): UseLocationTrackingResult {
-  const {
-    distanceInterval = 5,
-    timeInterval = 5000,
-    accuracy = Location.Accuracy.Balanced,
-  } = options;
-
+): LocationTrackingResult {
   const [coords, setCoords] = useState<Location.LocationObjectCoords | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [permissionGranted, setPermissionGranted] = useState<boolean>(false);
 
-  const subscriptionRef = useRef<Location.LocationSubscription | null>(null);
+  const subscriptionRef = useRef<LocationSubscription | null>(null);
+  const { distanceInterval, timeInterval, accuracy } = options;
 
   const startTracking = useCallback(async () => {
     setIsLoading(true);
     setErrorMsg(null);
 
     try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== Location.PermissionStatus.GRANTED) {
+      const permission = await requestLocationPermission();
+      if (permission.status !== 'granted') {
         setErrorMsg('Izin akses lokasi ditolak');
         setPermissionGranted(false);
         setIsLoading(false);
@@ -38,24 +38,13 @@ export function useLocationTracking(
       }
 
       setPermissionGranted(true);
-
-      const initialPos = await Location.getCurrentPositionAsync({ accuracy });
-      setCoords(initialPos.coords);
+      setCoords(await getCurrentCoords(accuracy));
       setIsLoading(false);
 
-      if (subscriptionRef.current) {
-        subscriptionRef.current.remove();
-      }
-
-      subscriptionRef.current = await Location.watchPositionAsync(
-        {
-          accuracy,
-          distanceInterval,
-          timeInterval,
-        },
-        (newLocation) => {
-          setCoords(newLocation.coords);
-        }
+      subscriptionRef.current?.remove();
+      subscriptionRef.current = await watchCoords(
+        { distanceInterval, timeInterval, accuracy },
+        setCoords
       );
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : 'Gagal mengakses GPS');
@@ -67,11 +56,9 @@ export function useLocationTracking(
     startTracking();
 
     return () => {
-      // ponytail: zero memory leak cleanup on unmount
-      if (subscriptionRef.current) {
-        subscriptionRef.current.remove();
-        subscriptionRef.current = null;
-      }
+      // zero memory leak cleanup on unmount
+      subscriptionRef.current?.remove();
+      subscriptionRef.current = null;
     };
   }, [startTracking]);
 

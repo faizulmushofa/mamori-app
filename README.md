@@ -109,6 +109,7 @@ Buat branch baru dari `dev` dengan format:
 - `feat/nama-fitur` (contoh: `feat/camera-location`, `feat/duplicate-detection`)
 - `fix/nama-bug` (contoh: `fix/gps-drift`, `fix/auth-persist`)
 - `refactor/komponen` (contoh: `refactor/zustand-store`)
+- `logic/milestone-N-fitur` (contoh: `logic/milestone-2-offline-storage`) — khusus milestone yang hanya berisi logic tanpa UI
 
 ---
 

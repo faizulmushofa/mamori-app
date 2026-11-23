@@ -9,7 +9,19 @@ export interface LocationTrackingOptions {
   accuracy?: Location.Accuracy;
 }
 
-export interface UseLocationTrackingResult {
+export type LocationPermission = 'granted' | 'denied' | 'undetermined';
+
+export interface PermissionResult {
+  status: LocationPermission;
+  canAskAgain: boolean;
+}
+
+/** Minimal handle returned by watchCoords; call remove() to stop updates. */
+export interface LocationSubscription {
+  remove: () => void;
+}
+
+export interface LocationTrackingResult {
   coords: Location.LocationObjectCoords | null;
   errorMsg: string | null;
   isLoading: boolean;
